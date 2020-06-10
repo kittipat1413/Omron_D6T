@@ -164,6 +164,7 @@ void delay(int msec) {
 int main() {
     int i, j;
 
+    while(1){
     uint8_t dat1[] = {0x02, 0x00, 0x01, 0xee};
     i2c_write_reg8(D6T_ADDR, dat1, sizeof(dat1));
     uint8_t dat2[] = {0x05, 0x90, 0x3a, 0xb8};
@@ -200,6 +201,8 @@ int main() {
             printf(",");   // print delimiter
         }
     }
+
+  }
     return 0;
 }
 // vi: ft=c:fdm=marker:et:sw=4:tw=80
