@@ -33,7 +33,7 @@ uint8_t calc_crc(uint8_t data);
 bool D6T_checkPEC(uint8_t buf[], int n);
 void delay(int msec);
 
-//Return Max value from 8 pixel 
+//Return 1 if read success
 /*The output will be negative if some problem occurs.
 -20 = "Crc Error"
 -21 = "Failed to open device"
@@ -42,8 +42,11 @@ void delay(int msec);
 -24 = "Failed to read device"
 -25 = "Short read  from device"
 */ 
-int16_t D6T8L09_Read(void);
+int16_t D6T8L09_Read(int16_t *ret_array);
 
+//Return Max value from 8 pixel + Offset
+//If some problem occurs this function will return 0
+int16_t D6T8L09_GetTemp(int Sampling);
 
 
 

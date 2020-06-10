@@ -101,7 +101,7 @@ void delay(int msec) {
 
 
 
-int16_t D6T8L09_Read() {
+int16_t D6T8L09_Read(int16_t *ret_array) {
     uint8_t i, j;
     uint8_t rbuf[N_READ];
     uint32_t ret;
@@ -144,28 +144,58 @@ int16_t D6T8L09_Read() {
     }
     
     int16_t itemp;
+    int16_t ptat;
     int16_t MAX_Sampling_temp;
     
+    //PTAT measurement 
+    ptat = conv8us_s16_le(rbuf, 0);
+    ret_array[1] = ptat;
+    //printf("PTAT: %6.1f[degC]\n", itemp / 10.0);
+
+
+
     //Read first Pixel
     itemp = conv8us_s16_le(rbuf, 2);
-    printf("%4.1f,", itemp / 10.0); 
+    //printf("%4.1f,", itemp / 10.0); 
     MAX_Sampling_temp = itemp;
 
     //Read remaining pixel and find max value
     for (i = 1, j = 4; i < N_PIXEL; i++, j += 2) {
         itemp = conv8us_s16_le(rbuf, j); 
-        printf("%4.1f", itemp / 10.0);  // print PTAT & Temperature
+        //printf("%4.1f", itemp / 10.0);  // print PTAT & Temperature
         if ((i % N_ROW) == N_ROW - 1) {
-            printf(" [degC]\n");  // wrap text at ROW end.
+            //printf(" [degC]\n");  // wrap text at ROW end.
         } else {
-            printf(",");   // print delimiter
+            //printf(",");   // print delimiter
         }
         if(itemp > MAX_Sampling_temp){
              MAX_Sampling_temp = itemp;
         }
     }
-    printf("MAX_Sampling_temp : %4.1f \n", MAX_Sampling_temp / 10.0); 
-    return MAX_Sampling_temp;
+    //printf("MAX_Sampling_temp : %4.1f \n", MAX_Sampling_temp / 10.0);
+    ret_array[0] = MAX_Sampling_temp;
+    return 1;
 }
 
+int16_t D6T8L09_GetTemp(int Sampling){
+    int16_t Max_temp = 0;
+    int16_t face_temp[2];
 
+    for (int i=0;i<=Sampling;i++){
+        //printf("Sampling : %d \n", i); 
+        if(D6T8L09_Read(face_temp)){
+            if (face_temp[0] >  Max_temp){
+                  Max_temp = face_temp[0];
+            }
+        }
+        else{
+              printf("\n\nError : %d \n\n\n",  face_temp);
+              return 0;
+        }
+    }
+
+    /*Offset face to body temp*/
+    return(Max_temp+40); 
+
+
+}
