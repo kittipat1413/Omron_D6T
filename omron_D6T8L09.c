@@ -189,7 +189,7 @@ int16_t D6T8L09_GetTemp(int Sampling){
             }
         }
         else{
-              printf("\n\nError : %d \n\n\n",  face_temp);
+              //printf("\n\nError : %d \n\n\n",  face_temp);
               return 0;
         }
     }
