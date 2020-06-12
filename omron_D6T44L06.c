@@ -133,8 +133,6 @@ void delay(int msec) {
 int16_t D6T44L06_Read(int16_t *ret_array) {
     uint8_t i, j;
     uint8_t rbuf[N_READ];
-    uint32_t ret;
-
 
     memset(rbuf, 0, N_READ);
     for (i = 0; i < 10; i++) {
@@ -195,7 +193,7 @@ float D6T44L06_GetTemp(int Sampling){
 
     for (int i=0;i<=Sampling;i++){
         //printf("Sampling : %d \n", i); 
-        if(D6T8L09_Read(face_temp)){
+        if(D6T44L06_Read(face_temp)){
             if (face_temp[0] >  Max_temp){
                   Max_temp = face_temp[0];
             }
