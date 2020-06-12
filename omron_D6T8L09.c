@@ -195,7 +195,7 @@ float D6T8L09_GetTemp(int Sampling){
     }
     float Offset = 8.35881937 + -0.020313201*face_temp[1];
     /*Offset face to body temp*/
-    return(float(Max_temp/10.0)+Offset); 
+    return((float)(Max_temp/10.0)+Offset); 
 
 
 }
