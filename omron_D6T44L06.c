@@ -130,13 +130,9 @@ void delay(int msec) {
 }
 
 
-/** <!-- main - Thermal sensor {{{1 -->
- * 1. read sensor.
- * 2. output results, format is: [degC]
- */
-int main() {
-    int i, j;
-
+int16_t D6T44L06_Read(int16_t *ret_array) {
+    uint8_t i, j;
+    uint8_t rbuf[N_READ];
 
     memset(rbuf, 0, N_READ);
     for (i = 0; i < 10; i++) {
@@ -151,27 +147,118 @@ int main() {
     }
     if (i >= 10) {
         fprintf(stderr, "Failed to read/write: %s\n", strerror(errno));
-        return 1;
+        return 0;
     }
-
     if (D6T_checkPEC(rbuf, N_READ - 1)) {
-        return 2;
+        return 0;
     }
+    
+    int16_t itemp;
+    int16_t ptat;
+    int16_t MAX_Sampling_temp;
+    
+    //PTAT measurement 
+    ptat = conv8us_s16_le(rbuf, 0);
+    ret_array[1] = ptat;
+    //printf("PTAT: %6.1f[degC]\n", itemp / 10.0);
 
-    // 1st data is PTAT measurement (: Proportional To Absolute Temperature)
-    int16_t itemp = conv8us_s16_le(rbuf, 0);
-    printf("PTAT: %6.1f[degC]\n", itemp / 10.0);
 
-    // loop temperature pixels of each thrmopiles measurements
-    for (i = 0, j = 2; i < N_PIXEL; i++, j += 2) {
-        itemp = conv8us_s16_le(rbuf, j);
-        printf("%4.1f", itemp / 10.0);  // print PTAT & Temperature
+
+    //Read first Pixel
+    itemp = conv8us_s16_le(rbuf, 2);
+    //printf("%4.1f,", itemp / 10.0); 
+    MAX_Sampling_temp = itemp;
+
+    //Read remaining pixel and find max value
+    for (i = 1, j = 4; i < N_PIXEL; i++, j += 2) {
+        itemp = conv8us_s16_le(rbuf, j); 
+        //printf("%4.1f", itemp / 10.0);  // print PTAT & Temperature
         if ((i % N_ROW) == N_ROW - 1) {
-            printf(" [degC]\n");  // wrap text at ROW end.
+            //printf(" [degC]\n");  // wrap text at ROW end.
         } else {
-            printf(",");   // print delimiter
+            //printf(",");   // print delimiter
+        }
+        if(itemp > MAX_Sampling_temp){
+             MAX_Sampling_temp = itemp;
         }
     }
+    //printf("MAX_Sampling_temp : %4.1f \n", MAX_Sampling_temp / 10.0);
+    ret_array[0] = MAX_Sampling_temp;
+    return 1;
+}
+
+float D6T44L06_GetTemp(int Sampling){
+    int16_t Max_temp = 0;
+    int16_t face_temp[2];
+
+    for (int i=0;i<=Sampling;i++){
+        //printf("Sampling : %d \n", i); 
+        if(D6T44L06_Read(face_temp)){
+            if (face_temp[0] >  Max_temp){
+                  Max_temp = face_temp[0];
+            }
+        }
+        else{
+              //printf("\n\nError : %d \n\n\n",  face_temp);
+              return 0;
+        }
+    }
+    float Offset = 8.35881937 + -0.020313201*face_temp[1];
+    /*Offset face to body temp*/
+    return((float)(Max_temp/10.0)+Offset); 
+
+
+}
+
+
+/** <!-- main - Thermal sensor {{{1 -->
+ * 1. read sensor.
+ * 2. output results, format is: [degC]
+ */
+int main() {
+   
+    int Sampling = 3;
+    float temp;
+
+ 		
+ 	temp = D6T44L06_GetTemp(Sampling); 
+ 	printf("\n\nBody Temp : %4.1f \n\n\n", temp); 
+
+
+
+    // memset(rbuf, 0, N_READ);
+    // for (i = 0; i < 10; i++) {
+    //     uint32_t ret = i2c_read_reg8(D6T_ADDR, D6T_CMD, rbuf, N_READ);
+    //     if (ret == 0) {
+    //         break;
+    //     } else if (ret == 23) {  // write error
+    //         delay(60);
+    //     } else if (ret == 24) {  // read error
+    //         delay(3000);
+    //     }
+    // }
+    // if (i >= 10) {
+    //     fprintf(stderr, "Failed to read/write: %s\n", strerror(errno));
+    //     return 1;
+    // }
+
+    // if (D6T_checkPEC(rbuf, N_READ - 1)) {
+    //     return 2;
+    // }
+
+    // // 1st data is PTAT measurement (: Proportional To Absolute Temperature)
+    // int16_t itemp = conv8us_s16_le(rbuf, 0);
+    // printf("PTAT: %6.1f[degC]\n", itemp / 10.0);
+
+    // // loop temperature pixels of each thrmopiles measurements
+    // for (i = 0, j = 2; i < N_PIXEL; i++, j += 2) {
+    //     itemp = conv8us_s16_le(rbuf, j);
+    //     printf("%4.1f", itemp / 10.0);  // print PTAT & Temperature
+    //     if ((i % N_ROW) == N_ROW - 1) {
+    //         printf(" [degC]\n");  // wrap text at ROW end.
+    //     } else {
+    //         printf(",");   // print delimiter
+    //     }
+    // }
     return 0;
 }
-// vi: ft=c:fdm=marker:et:sw=4:tw=80
