@@ -177,7 +177,7 @@ int16_t D6T8L09_Read(int16_t *ret_array) {
     return 1;
 }
 
-int16_t D6T8L09_GetTemp(int Sampling){
+float D6T8L09_GetTemp(int Sampling){
     int16_t Max_temp = 0;
     int16_t face_temp[2];
 
@@ -193,9 +193,9 @@ int16_t D6T8L09_GetTemp(int Sampling){
               return 0;
         }
     }
-
+    float Offset = 8.35881937 + -0.020313201*face_temp[1];
     /*Offset face to body temp*/
-    return(Max_temp+40); 
+    return(float(Max_temp/10.0)+Offset); 
 
 
 }

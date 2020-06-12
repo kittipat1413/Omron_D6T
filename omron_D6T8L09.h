@@ -46,7 +46,7 @@ int16_t D6T8L09_Read(int16_t *ret_array);
 
 //Return Max value from 8 pixel + Offset
 //If some problem occurs this function will return 0
-int16_t D6T8L09_GetTemp(int Sampling);
+float D6T8L09_GetTemp(int Sampling);
 
 
 
